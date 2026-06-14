@@ -1,0 +1,122 @@
+[
+  {
+    "question": "Why is fill rate dropping in US-East inventory?",
+    "expected_issue_type": "inventory_quality",
+    "expected_answer_contains": "inventory source INV_019 testing status or low bid rates",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why is campaign C1004 underdelivering?",
+    "expected_issue_type": "campaign_underperformance",
+    "expected_answer_contains": "MediConnect campaign has pacing at 0.75 and low CTR around 1%",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why did CTR fall this week for FinanceHub campaigns?",
+    "expected_issue_type": "performance_degradation",
+    "expected_answer_contains": "possible audience fatigue or increased competition in finance vertical",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which campaigns are at risk of not meeting their delivery targets?",
+    "expected_issue_type": "pacing_alert",
+    "expected_answer_contains": "C1007, C1012, C1016, C1021, C1024, C1029 with pacing below 0.5",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Why is CTV inventory underperforming compared to Mobile?",
+    "expected_issue_type": "channel_comparison",
+    "expected_answer_contains": "CTV has lower bid rates or higher CPMs reducing competitiveness",
+    "difficulty": "medium"
+  },
+  {
+    "question": "What caused the revenue drop on October 15th?",
+    "expected_issue_type": "anomaly_detection",
+    "expected_answer_contains": "significant impression drop across multiple campaigns or inventory sources",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Why are EU-West impressions lower than expected?",
+    "expected_issue_type": "regional_underperformance",
+    "expected_answer_contains": "limited inventory availability or lower fill rates in EU-West region",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Is campaign C1012 at risk of budget exhaustion?",
+    "expected_issue_type": "budget_analysis",
+    "expected_answer_contains": "C1012 TechVista has low pacing at 0.30 and paused status indicating budget issues",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why is the win rate so low for Sports content category?",
+    "expected_issue_type": "content_category_analysis",
+    "expected_answer_contains": "high competition in Sports vertical with premium pricing",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Which inventory sources should be paused due to poor performance?",
+    "expected_issue_type": "inventory_optimization",
+    "expected_answer_contains": "INV_016, INV_017, INV_020 inactive or testing with low fill rates",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why did impressions spike for RetailMax on October 20th?",
+    "expected_issue_type": "anomaly_detection",
+    "expected_answer_contains": "possible promotional campaign or seasonal event driving increased volume",
+    "difficulty": "hard"
+  },
+  {
+    "question": "How is AutoDrive campaign C1017 pacing against target?",
+    "expected_issue_type": "pacing_analysis",
+    "expected_answer_contains": "C1017 AutoDrive completed with pacing at 0.95 meeting targets",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why is Mobile inventory in APAC region underperforming?",
+    "expected_issue_type": "regional_underperformance",
+    "expected_answer_contains": "limited demand from APAC advertisers or lower CPMs in region",
+    "difficulty": "hard"
+  },
+  {
+    "question": "What is the average CTR for HealthFirst campaigns?",
+    "expected_issue_type": "metric_calculation",
+    "expected_answer_contains": "HealthFirst campaigns C1008, C1018, C1028 have CTR around 2%",
+    "difficulty": "easy"
+  },
+  {
+    "question": "Why are Kids content impressions declining?",
+    "expected_issue_type": "content_category_analysis",
+    "expected_answer_contains": "seasonal factors or brand safety concerns affecting Kids inventory",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Which advertiser has the best performing campaigns overall?",
+    "expected_issue_type": "advertiser_comparison",
+    "expected_answer_contains": "FinanceHub has highest CTR at 5% across campaigns",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Why did bid volume drop for CTV on October 25th?",
+    "expected_issue_type": "anomaly_detection",
+    "expected_answer_contains": "possible technical issue or demand partner connectivity problem",
+    "difficulty": "hard"
+  },
+  {
+    "question": "Is there a correlation between inventory status and fill rate?",
+    "expected_issue_type": "inventory_analysis",
+    "expected_answer_contains": "inactive and testing inventories show significantly lower fill rates",
+    "difficulty": "medium"
+  },
+  {
+    "question": "Why is EduLearn campaign C1029 paused?",
+    "expected_issue_type": "campaign_status",
+    "expected_answer_contains": "C1029 paused with low pacing at 0.30 possibly due to budget constraints",
+    "difficulty": "easy"
+  },
+  {
+    "question": "What factors are causing overall fill rate to decline this month?",
+    "expected_issue_type": "trend_analysis",
+    "expected_answer_contains": "combination of inactive inventory sources, underperforming campaigns, and seasonal factors",
+    "difficulty": "hard"
+  }
+]
