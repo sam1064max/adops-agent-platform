@@ -42,6 +42,7 @@ class Campaign(Base):
     budget = Column(Float, default=0.0)
     spend = Column(Float, default=0.0)
     impressions = Column(Integer, default=0)
+    target_impressions = Column(Integer, default=0)
     clicks = Column(Integer, default=0)
     conversions = Column(Integer, default=0)
     start_date = Column(DateTime, nullable=True)

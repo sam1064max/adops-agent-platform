@@ -8,7 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import router
 from src.api.middleware import RequestLoggingMiddleware
-from src.config.settings import get_settings
+from src.dashboards.router import router as dashboard_router
+from src.api.dependencies import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +18,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     settings = get_settings()
     logger.info("Starting AdOps Copilot API...")
-    # Initialize connections here
     yield
     logger.info("Shutting down AdOps Copilot API...")
 
@@ -26,7 +26,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title="AdOps Copilot API",
-        description="AI-powered AdOps troubleshooting copilot",
+        description="Operational Intelligence Platform for Ad Delivery Diagnostics",
         version="0.1.0",
         lifespan=lifespan,
     )
@@ -39,6 +39,7 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(RequestLoggingMiddleware)
     app.include_router(router, prefix="/api/v1")
+    app.include_router(dashboard_router)
     return app
 
 

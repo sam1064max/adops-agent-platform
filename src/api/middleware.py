@@ -65,8 +65,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     single-process deployments; use Redis for multi-worker setups.
     """
 
-    def __init__(self, window_seconds: int = 60) -> None:
-        super().__init__()
+    def __init__(self, app=None, window_seconds: int = 60) -> None:
+        super().__init__(app)
         self._window = window_seconds
         # key -> list of timestamps (seconds since epoch)
         self._hits: Dict[str, List[float]] = defaultdict(list)

@@ -1,126 +1,75 @@
 # AdOps Agent Platform
 
-[![CI](https://github.com/sushant-shambharkar/adops-agent-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/sushant-shambharkar/adops-agent-platform/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/sushant-shambharkar/adops-agent-platform)](https://github.com/sushant-shambharkar/adops-agent-platform/releases)
+[![CI](https://github.com/sam1064max/adops-agent-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/sam1064max/adops-agent-platform/actions/workflows/ci.yml)
 [![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-compose-ready-blue.svg)](https://docs.docker.com/compose/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
-An AI-powered AdOps troubleshooting copilot that helps Ad Operations teams diagnose delivery issues through Retrieval-Augmented Generation (RAG).
+**Operational Intelligence Platform for Ad Delivery Diagnostics**
 
-Built with a 2023-era technology stack: FastAPI, Qdrant, Sentence Transformers, SQLAlchemy, and Prometheus/Grafana observability.
+An AI-powered investigation system that helps Ad Operations teams diagnose delivery issues through automated root-cause analysis and evidence-driven reporting.
+
+Built like an internal platform at Amagi, FreeWheel, Magnite, or Google Ad Manager (2023 era).
 
 ---
 
 ## Architecture
 
 ```
-                          ┌─────────────────────┐
-                          │      User Query      │
-                          └──────────┬──────────┘
-                                     │
-                          ┌──────────▼──────────┐
-                          │   AdOps Copilot API  │
-                          │      (FastAPI)       │
-                          └──────────┬──────────┘
-                                     │
-              ┌──────────────────────┼──────────────────────┐
-              │                      │                      │
-   ┌──────────▼──────────┐ ┌────────▼────────┐ ┌──────────▼──────────┐
-   │    Query Agent      │ │ Retrieval Agent │ │   Analysis Agent    │
-   │  (Classification)   │ │  (RAG Search)   │ │  (Root Cause)       │
-   └──────────┬──────────┘ └────────┬────────┘ └──────────┬──────────┘
-              │                      │                      │
-              │              ┌───────▼───────┐             │
-              │              │  Qdrant + KB   │             │
-              │              │  (Vector DB)   │             │
-              │              └───────────────┘             │
-              │                                            │
-   ┌──────────▼────────────────────────────────────────────▼──┐
-   │                  Response Agent                           │
-   │              (Synthesis & Formatting)                     │
-   └──────────────────────────┬───────────────────────────────┘
-                              │
-                    ┌─────────▼─────────┐
-                    │  Structured Answer │
-                    │  • Summary         │
-                    │  • Root Cause      │
-                    │  • Evidence        │
-                    │  • Actions         │
-                    │  • Escalation      │
-                    └───────────────────┘
+                  User Query
+                      │
+                      ▼
+         Investigation Orchestrator
+                      │
+       ┌──────────────┼──────────────┐
+       ▼              ▼              ▼
+ Campaign Agent  Inventory Agent  Delivery Agent
+       │              │              │
+       ▼              ▼              ▼
+  Campaign DB    Inventory DB    Delivery Logs
+       │              │              │
+       └──────────────┼──────────────┘
+                      ▼
+           Root Cause Engine
+              (hypothesis → rank)
+                      │
+                      ▼
+         Recommendation Engine
+                      │
+                      ▼
+             Investigation Report
+    • Summary        • Root Cause     • Confidence
+    • Evidence       • Supporting     • Recommendations
+    • Risk Level       Factors
 ```
+
+The **investigation engine** drives answers — operational data contributes >80% of reasoning. KB retrieval is supplemental (<20%).
 
 ---
 
 ## Features
 
-- **Natural Language Querying** — Ask questions in plain English about delivery issues
-- **Automated Issue Classification** — Categorizes issues: fill rate, CTR, underdelivery, inventory, revenue, pacing
-- **RAG-Powered Knowledge Base** — 10 expert troubleshooting guides for contextual answers
-- **Root Cause Analysis** — Statistical anomaly detection and heuristic reasoning
-- **Structured Responses** — Summary, evidence, root cause, confidence scores, recommended actions
+- **Automated Root-Cause Analysis** — Investigates delivery issues through evidence collection, hypothesis generation, and ranking
+- **AdTech Analytics** — Fill rate, pacing, win rate, bid rate, eCPM, auction pressure, CTR, inventory health
+- **Knowledge Graph** — Entity-relationship graph for Campaign, Inventory, Region, Device, Channel relationships
+- **Trend Analysis** — 7/30-day trends, anomaly detection, change points, seasonality, linear forecasting
+- **Investigation Pipeline** — Planner → Evidence Collector → Hypothesis Generator → Ranker → Root Cause → Recommendations
+- **Operational Dashboards** — Internal FastAPI dashboards for campaign health, inventory health, risk explorer
 - **Full Observability** — Prometheus metrics + Grafana dashboards
-- **Production Ready** — Docker Compose, CI/CD, API authentication, rate limiting
+- **RAG-Enhanced** — KB retrieval supplements operational analysis (<20% contribution)
 
 ---
 
 ## Quick Start
 
-### Prerequisites
-
-- Python 3.11+
-- Docker & Docker Compose
-- PostgreSQL (or use Docker)
-- Qdrant (or use Docker)
-
-### Docker (Recommended)
-
 ```bash
-# Clone the repository
-git clone https://github.com/sushant-shambharkar/adops-agent-platform.git
+git clone https://github.com/sam1064max/adops-agent-platform.git
 cd adops-agent-platform
-
-# Copy environment config
 cp .env.example .env
-
-# Start all services
 docker-compose up -d
-
-# Seed the database
 docker-compose exec api python scripts/init_db.py
-
-# Ingest knowledge base into Qdrant
-curl -X POST http://localhost:8000/api/v1/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"data_type": "knowledge_base", "payload": [{"source": "kb"}]}'
-```
-
-### Local Development
-
-```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate   # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start PostgreSQL and Qdrant (or use Docker)
-docker-compose up -d postgres qdrant
-
-# Set environment variables
-export POSTGRES_URL="postgresql+psycopg2://adops:adops@localhost:5432/adops"
-export QDRANT_HOST="localhost"
-
-# Seed database
-python scripts/init_db.py
-
-# Run the API
-uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
@@ -129,166 +78,104 @@ uvicorn src.api.app:app --host 0.0.0.0 --port 8000 --reload
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/ask` | Ask a natural language question |
-| `POST` | `/api/v1/ingest` | Trigger RAG ingestion pipeline |
-| `GET` | `/api/v1/campaign/{id}` | Get campaign metrics |
-| `POST` | `/api/v1/campaigns` | List campaigns with filters |
-| `GET` | `/api/v1/inventory/{id}` | Get inventory metadata |
+| `POST` | `/api/v1/ask` | Full investigation — primary endpoint |
+| `POST` | `/api/v1/investigate` | Alias for `/ask` |
+| `GET` | `/api/v1/campaign/{id}/investigate` | Investigate specific campaign |
+| `POST` | `/api/v1/ingest` | Trigger RAG ingestion |
+| `GET` | `/api/v1/campaign/{id}` | Campaign metrics |
+| `POST` | `/api/v1/campaigns` | List campaigns |
+| `GET` | `/api/v1/inventory/{id}` | Inventory metadata |
 | `POST` | `/api/v1/delivery-logs` | Query delivery logs |
 | `GET` | `/api/v1/health` | Health check |
 | `GET` | `/api/v1/metrics` | Prometheus metrics |
+| `GET` | `/dashboard/` | Operational summary dashboard |
 
-### Sample Query
+---
+
+## Sample Investigation
 
 ```bash
 curl -X POST http://localhost:8000/api/v1/ask \
   -H "Content-Type: application/json" \
-  -d '{"text": "Why is campaign C101 underdelivering?"}'
+  -d '{"text": "Why is campaign C1004 underdelivering?"}'
 ```
 
 **Response:**
 
 ```json
 {
-  "issue_type": "delivery_underperformance",
-  "entities": ["101"],
-  "summary": "Detected delivery underperformance. Campaign C101 pacing at 62% with fill rate dropped from 85% to 54%.",
-  "evidence": [
-    "[KB] Underdelivery typically caused by narrow targeting...",
-    "[DB] Campaign C101 | impressions=310000 | status=active"
-  ],
-  "root_cause": "Inventory shortage in sports channels combined with narrow geo targeting.",
+  "summary": "Campaign C1004 pacing at 62%. Primary cause: inventory shortage in Sports channels.",
+  "primary_cause": "Inventory shortage - available supply decreased 38%",
   "confidence": 0.84,
-  "recommended_actions": [
-    "Audit creative assets for fatigue and refresh if CTR has declined >20%.",
-    "Verify pacing configuration aligns with flight dates.",
-    "Check daily caps and frequency caps for over-restriction."
+  "evidence": [
+    {"metric": "fill_rate", "current": 54, "historical": 85, "delta": -31},
+    {"metric": "win_rate", "current": 42, "historical": 71, "delta": -29},
+    {"metric": "pacing_ratio", "current": 0.62, "historical": 0.95, "delta": -0.33}
   ],
-  "escalation": "low"
+  "supporting_factors": [
+    "Geo targeting constraints limiting available inventory",
+    "Sports channel supply down 42%",
+    "CTV inventory fill rate dropped 35%"
+  ],
+  "recommendations": [
+    {"action": "Expand inventory pool to include adjacent channels", "priority": "high", "expected_impact": "+18% inventory availability"},
+    {"action": "Relax geo targeting from DMA-level to state-level", "priority": "medium", "expected_impact": "+12% reach"},
+    {"action": "Increase bid floor tolerance by 15%", "priority": "medium", "expected_impact": "+8% win rate"}
+  ],
+  "risk_level": "medium"
 }
 ```
 
 ---
 
-## Sample Queries
+## Investigation Engine
 
-| Question | Issue Type |
-|----------|------------|
-| "Why is fill rate dropping in US inventory?" | fill_rate |
-| "Why is campaign C101 underdelivering?" | underdelivery |
-| "Why did CTR fall this week?" | ctr |
-| "Why is sports inventory not serving?" | inventory |
-| "What is causing low revenue yesterday?" | revenue |
-| "Which campaigns are pacing behind target?" | pacing |
-| "Why are impressions lower than expected?" | underdelivery |
-| "What changed in delivery performance yesterday?" | general |
+The investigation pipeline transforms user questions into structured, evidence-driven reports.
+
+1. **Planner** — Classifies issue type, extracts entities, generates investigation steps
+2. **Evidence Collector** — Executes analytics modules against operational data
+3. **Hypothesis Generator** — Forms hypotheses from evidence deltas (fill_rate drop >20% → inventory hypothesis)
+4. **Hypothesis Ranker** — Scores by confidence + impact + evidence strength
+5. **Root Cause Engine** — Determines primary cause with supporting factors
+6. **Recommendation Engine** — Generates operational actions with expected impact
 
 ---
 
-## Knowledge Base
+## AdTech Analytics
 
-The system includes 10 expert troubleshooting guides:
-
-| Document | Coverage |
-|----------|----------|
-| `fill_rate_drop.md` | Fill rate diagnostics, demand issues, floor prices |
-| `underdelivery.md` | Campaign pacing, targeting, bid competition |
-| `ctr_drop.md` | Creative fatigue, audience mismatch, viewability |
-| `inventory_not_serving.md` | Ad server config, tag errors, header bidding |
-| `budget_exhaustion.md` | Budget caps, pacing, shared budgets |
-| `frequency_cap.md` | Cross-device tracking, dedup windows |
-| `geo_targeting.md` | IP geolocation, GDPR/CCPA, DMA targeting |
-| `creative_rejection.md` | Ad review policies, specs, brand safety |
-| `supply_shortage.md` | Forecasting, seasonal trends, floor prices |
-| `auction_competitiveness.md` | Bid landscape, win rates, CPM inflation |
+| Analyzer | Metrics | Detects |
+|----------|---------|---------|
+| Fill Rate | fill_rate, request_fill_rate, inventory_fill_rate | Supply shortage, request spikes, floor price issues |
+| Pacing | pacing_ratio, forecast_completion, budget_consumption | Underdelivery, overdelivery, budget constraints |
+| CTR | ctr, fatigue_score, audience_match | Creative fatigue, audience mismatch, position effects |
+| Auction | bid_rate, win_rate, eCPM, auction_pressure | Competitive loss, bid landscape changes, floor price |
+| Inventory | health_score, supply_trend, regional_availability | Inactive inventory, supply degradation, regional outages |
 
 ---
 
-## Observability
+## Knowledge Graph
 
-### Prometheus Metrics
+Entity types: Campaign, Inventory, Region, Device, Channel, Advertiser, ContentCategory, Issue
 
-Available at `http://localhost:8000/api/v1/metrics`
+Relationships: TARGETS, USES, BELONGS_TO, LOCATED_IN, HAS_ADVERTISER, DEVICE_TYPE
 
-- `adops_api_query_total` — Total queries processed
-- `adops_retrieval_latency_seconds` — Retrieval agent latency
-- `adops_analysis_latency_seconds` — Analysis agent latency
-- `adops_response_latency_seconds` — Response agent latency
-- `adops_qdrant_latency_seconds` — Qdrant search latency
-- `adops_active_requests` — Active request count
-
-### Grafana Dashboard
-
-Access at `http://localhost:3000` (admin/admin)
-
-Pre-configured dashboard with:
-- Query volume over time
-- Agent latency distributions
-- Error rates
-- Active requests
+Built with NetworkX. Supports impact tracing, campaign footprint analysis, regional issue detection.
 
 ---
 
-## Development
+## Documentation
 
-### Running Tests
-
-```bash
-pytest tests/ -v
-```
-
-### Linting
-
-```bash
-ruff check src/ tests/
-ruff format --check src/ tests/
-```
-
-### Project Structure
-
-```
-adops-agent-platform/
-├── src/
-│   ├── agents/          # Query, Retrieval, Analysis, Response agents
-│   ├── analytics/       # Fill rate, CTR, pacing, inventory analyzers
-│   ├── api/             # FastAPI app, routes, middleware, dependencies
-│   ├── config/          # Settings and configuration
-│   ├── ingestion/       # RAG pipeline, document loader, embeddings
-│   ├── models/          # SQLAlchemy ORM, Pydantic schemas
-│   └── retrieval/       # (Extended retrieval logic)
-├── knowledge_base/      # 10 troubleshooting markdown guides
-├── datasets/            # Sample campaign, delivery, inventory data
-├── tests/               # Pytest test suite
-├── evaluation/          # Offline evaluation framework
-├── dashboards/          # Grafana dashboard JSON
-├── monitoring/          # Prometheus configuration
-├── scripts/             # DB init, data seeding, evaluation runner
-├── .github/workflows/   # CI/CD pipelines
-├── Dockerfile
-├── docker-compose.yml
-├── Makefile
-└── pyproject.toml
-```
+| Document | Description |
+|----------|-------------|
+| `docs/Architecture.md` | Full system architecture and components |
+| `docs/InvestigationEngine.md` | Investigation pipeline deep-dive |
+| `docs/RootCauseEngine.md` | Root cause analysis methodology |
+| `docs/AdTechMetrics.md` | AdTech metrics reference |
+| `docs/KnowledgeGraph.md` | Knowledge graph schema and queries |
 
 ---
 
-## Evaluation
-
-Run the offline evaluation suite:
-
-```bash
-python scripts/run_eval.py
-```
-
-This generates `evaluation_report.html` with:
-- Retrieval Precision
-- Recall@K
-- Context Relevance
-- Answer Accuracy
-
----
-
-## Tech Stack (2023)
+## Tech Stack
 
 | Component | Technology |
 |-----------|------------|
@@ -297,25 +184,8 @@ This generates `evaluation_report.html` with:
 | Vector DB | Qdrant |
 | Embeddings | Sentence Transformers (all-MiniLM-L6-v2) |
 | Analytics | Pandas, NumPy, Scikit-learn |
+| Knowledge Graph | NetworkX |
 | Observability | Prometheus, Grafana |
 | Containerization | Docker, Docker Compose |
 | CI/CD | GitHub Actions |
 | Testing | Pytest |
-
----
-
-## Roadmap
-
-- [ ] LLM integration (Llama 2 / GPT-4 fallback)
-- [ ] Real-time alerting via Slack/webhooks
-- [ ] Multi-tenant support
-- [ ] Campaign simulation engine
-- [ ] A/B testing framework for responses
-- [ ] Historical trend dashboards
-- [ ] Automated report generation
-
----
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
