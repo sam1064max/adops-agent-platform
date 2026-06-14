@@ -59,8 +59,7 @@ class TestIngestResponseSchema:
 class TestQueryResponseSchema:
     def test_query_response(self):
         resp = QueryResponse(
-            issue_type=IssueType.FILL_RATE if hasattr(IssueType, "FILL_RATE")
-                       else IssueType.DELIVERY_UNDERPERFORMANCE,
+            issue_type=IssueType.DELIVERY_UNDERPERFORMANCE,
             summary="Fill rate dropped.",
             confidence=0.85,
             escalation=EscalationLevel.MEDIUM,

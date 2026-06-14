@@ -1,159 +1,61 @@
-import asyncio
-import os
+"""Initialize database schema and seed sample data."""
+
+from __future__ import annotations
+
+import logging
 import sys
 from pathlib import Path
 
-import asyncpg
 import pandas as pd
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://adops:adops_secret@localhost:5432/adops_db",
-)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from src.config.settings import settings
+from src.models.database import Campaign, DeliveryLog, InventoryMetadata, Base, SessionLocal, engine, init_db
+from src.ingestion.data_loader import DataLoader
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
 
 DATASETS_DIR = Path(__file__).resolve().parent.parent / "datasets"
 
-SCHEMA_SQL = """
-CREATE TABLE IF NOT EXISTS campaigns (
-    id              SERIAL PRIMARY KEY,
-    campaign_id     VARCHAR(64) UNIQUE NOT NULL,
-    name            VARCHAR(256) NOT NULL,
-    channel         VARCHAR(64),
-    status          VARCHAR(32) DEFAULT 'active',
-    budget          NUMERIC(14,2),
-    start_date      DATE,
-    end_date        DATE,
-    created_at      TIMESTAMP DEFAULT NOW()
-);
 
-CREATE TABLE IF NOT EXISTS ad_sets (
-    id              SERIAL PRIMARY KEY,
-    ad_set_id       VARCHAR(64) UNIQUE NOT NULL,
-    campaign_id     VARCHAR(64) REFERENCES campaigns(campaign_id),
-    name            VARCHAR(256),
-    targeting       JSONB,
-    bid_strategy    VARCHAR(64),
-    budget          NUMERIC(14,2),
-    status          VARCHAR(32) DEFAULT 'active',
-    created_at      TIMESTAMP DEFAULT NOW()
-);
+def seed_from_csv():
+    logger.info("Creating tables...")
+    init_db()
 
-CREATE TABLE IF NOT EXISTS creatives (
-    id              SERIAL PRIMARY KEY,
-    creative_id     VARCHAR(64) UNIQUE NOT NULL,
-    ad_set_id       VARCHAR(64) REFERENCES ad_sets(ad_set_id),
-    title           VARCHAR(256),
-    body            TEXT,
-    image_url       TEXT,
-    landing_url     TEXT,
-    format          VARCHAR(32),
-    status          VARCHAR(32) DEFAULT 'active',
-    created_at      TIMESTAMP DEFAULT NOW()
-);
+    loader = DataLoader()
 
-CREATE TABLE IF NOT EXISTS metrics_daily (
-    id              SERIAL PRIMARY KEY,
-    date            DATE NOT NULL,
-    entity_type     VARCHAR(32) NOT NULL,
-    entity_id       VARCHAR(64) NOT NULL,
-    impressions     BIGINT DEFAULT 0,
-    clicks          BIGINT DEFAULT 0,
-    conversions     BIGINT DEFAULT 0,
-    spend           NUMERIC(14,2) DEFAULT 0,
-    revenue         NUMERIC(14,2) DEFAULT 0,
-    created_at      TIMESTAMP DEFAULT NOW(),
-    UNIQUE(date, entity_type, entity_id)
-);
+    campaigns_file = DATASETS_DIR / "campaigns.csv"
+    delivery_file = DATASETS_DIR / "delivery_logs.csv"
+    inventory_file = DATASETS_DIR / "inventory.csv"
 
-CREATE TABLE IF NOT EXISTS audiences (
-    id              SERIAL PRIMARY KEY,
-    audience_id     VARCHAR(64) UNIQUE NOT NULL,
-    name            VARCHAR(256),
-    size_estimate   BIGINT,
-    criteria        JSONB,
-    created_at      TIMESTAMP DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS knowledge_base (
-    id              SERIAL PRIMARY KEY,
-    doc_id          VARCHAR(64) UNIQUE NOT NULL,
-    title           VARCHAR(512),
-    content         TEXT,
-    category        VARCHAR(64),
-    metadata        JSONB,
-    embedding       VECTOR(1536),
-    created_at      TIMESTAMP DEFAULT NOW()
-);
-"""
-
-
-def read_csv_tables() -> dict[str, pd.DataFrame]:
-    tables: dict[str, pd.DataFrame] = {}
-    if not DATASETS_DIR.exists():
-        print(f"[init_db] datasets dir not found: {DATASETS_DIR}")
-        return tables
-
-    csv_files = list(DATASETS_DIR.glob("*.csv"))
-    if not csv_files:
-        print("[init_db] no CSV files in datasets/")
-        return tables
-
-    for csv_file in csv_files:
-        stem = csv_file.stem.lower().replace("-", "_").replace(" ", "_")
-        tables[stem] = pd.read_csv(csv_file)
-        print(f"[init_db] loaded {csv_file.name} -> table '{stem}' ({len(tables[stem])} rows)")
-
-    return tables
-
-
-async def seed_table(conn: asyncpg.Connection, table: str, df: pd.DataFrame) -> int:
-    if df.empty:
-        return 0
-
-    columns = list(df.columns)
-    placeholders = ", ".join(f"${i + 1}" for i in range(columns))
-    col_names = ", ".join(columns)
-    sql = f"INSERT INTO {table} ({col_names}) VALUES ({placeholders}) ON CONFLICT DO NOTHING"
-
-    rows = [tuple(row) for _, row in df.iterrows()]
-    count = 0
-    for row in rows:
-        try:
-            await conn.execute(sql, *row)
-            count += 1
-        except Exception as exc:
-            print(f"[init_db] skip row in {table}: {exc}")
-    return count
-
-
-async def main() -> None:
-    print(f"[init_db] connecting to {DATABASE_URL}")
-    conn = await asyncpg.connect(DATABASE_URL)
-
+    db = SessionLocal()
     try:
-        print("[init_db] creating schema ...")
-        await conn.execute(SCHEMA_SQL)
-        print("[init_db] schema OK")
+        if campaigns_file.exists():
+            campaigns_df = loader.load_campaigns(str(campaigns_file))
+            n = loader.seed_database(engine, campaigns_df, None, None)
+            logger.info("Seeded campaigns data")
+        else:
+            logger.warning("Campaigns CSV not found: %s", campaigns_file)
 
-        csv_tables = read_csv_tables()
-        for table, df in csv_tables.items():
-            if table in (
-                "campaigns",
-                "ad_sets",
-                "creatives",
-                "metrics_daily",
-                "audiences",
-                "knowledge_base",
-            ):
-                n = await seed_table(conn, table, df)
-                print(f"[init_db] seeded {n} rows into {table}")
-            else:
-                print(f"[init_db] skip unknown table '{table}'")
+        if delivery_file.exists():
+            delivery_df = loader.load_delivery_logs(str(delivery_file))
+            loader.seed_database(engine, None, delivery_df, None)
+            logger.info("Seeded delivery logs")
+
+        if inventory_file.exists():
+            inventory_df = loader.load_inventory(str(inventory_file))
+            loader.seed_database(engine, None, None, inventory_df)
+            logger.info("Seeded inventory metadata")
+
+        logger.info("Database initialization complete")
+    except Exception as e:
+        logger.error("Failed to seed database: %s", e)
+        raise
     finally:
-        await conn.close()
-
-    print("[init_db] done")
+        db.close()
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    seed_from_csv()

@@ -11,7 +11,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=postgresql+asyncpg://adops:adops_secret@postgres:5432/adops_db
+      - DATABASE_URL=postgresql+psycopg2://adops:adops_secret@postgres:5432/adops_db
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
     depends_on:

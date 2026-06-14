@@ -73,15 +73,17 @@ class Evaluator:
         with open(self.questions_path) as f:
             data = json.load(f)
 
+        questions = data if isinstance(data, list) else data.get("questions", data)
+
         return [
             EvalQuestion(
-                id=q["id"],
+                id=q.get("id", str(i)),
                 question=q["question"],
-                expected_answer=q["expected_answer"],
+                expected_answer=q.get("expected_answer", q.get("expected_answer_contains", "")),
                 expected_relevant_docs=q.get("expected_relevant_docs", []),
-                category=q.get("category", "general"),
+                category=q.get("category", q.get("difficulty", "general")),
             )
-            for q in data["questions"]
+            for i, q in enumerate(questions)
         ]
 
     def _compute_retrieval_precision(
